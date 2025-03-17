@@ -1,6 +1,4 @@
 import * as vscode from 'vscode';
-import * as fs from 'fs';
-import * as path from 'path';
 
 export function activate(context: vscode.ExtensionContext) {
     const disposable = vscode.commands.registerCommand('vscode-test-generator.generateRtlTests', async (uri: vscode.Uri) => {
@@ -15,43 +13,32 @@ export function activate(context: vscode.ExtensionContext) {
 }
 
 async function generateRtlTests(filePath: string) {
-    const testFilePath = filePath.replace('.tsx', '.test.tsx');
-    const componentName = path.basename(filePath, '.tsx');
-
-    // Check if the test file already exists
-    if (fs.existsSync(testFilePath)) {
-        vscode.window.showInformationMessage('Test file already exists');
-        return;
-    }
+    const testFilePath = filePath.replace('.tsx', '.spec.tsx'); // Use .spec.tsx instead of .test.tsx
 
     try {
-        // Use Copilot to generate the test content for the component
-        const editor = vscode.window.activeTextEditor;
-        if (editor) {
-            const document = editor.document;
-            const range = new vscode.Range(0, 0, document.lineCount, 0);
-            const fileContent = document.getText(range);
+        // Trigger Copilot's generate tests functionality
+        const testContent = await vscode.commands.executeCommand<string>('github.copilot.chat.generateTests', {
+            content: filePath, // Pass filePath to Copilot for context (or use full file content here if required)
+            language: 'tsx'
+        });
 
-            // Trigger Copilot's generate tests functionality
-            const testContent = await vscode.commands.executeCommand<string>('github.copilot.chat.generateTests', {
-                content: fileContent,
-                language: 'tsx'
+        if (testContent) {
+            // Directly save the content as a .spec.tsx file
+            const doc = await vscode.workspace.openTextDocument({
+                content: testContent,
+                language: 'typescriptreact',
             });
 
-            if (testContent) {
-                // Create the test file with Copilot-generated content
-                fs.writeFileSync(testFilePath, testContent);
-                vscode.window.showInformationMessage(`Test file generated: ${testFilePath}`);
-            } else {
-                vscode.window.showErrorMessage('Could not generate tests using Copilot');
-            }
+            const edit = new vscode.WorkspaceEdit();
+            edit.createFile(vscode.Uri.file(testFilePath), { overwrite: true });
+            await vscode.workspace.applyEdit(edit);
+
+            vscode.window.showInformationMessage(`Test file generated: ${testFilePath}`);
+        } else {
+            vscode.window.showErrorMessage('Could not generate tests using Copilot');
         }
     } catch (error) {
-        if (error instanceof Error) {
-            vscode.window.showErrorMessage(`Error generating tests: ${error.message}`);
-        } else {
-            vscode.window.showErrorMessage('Error generating tests');
-        }
+        vscode.window.showErrorMessage(`Error generating tests: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
 }
 
