@@ -2,7 +2,7 @@
   "name": "vscode-test-generator",
   "publisher": "orpcy",
   "displayName": "vscode-test-generator",
-  "description": "Generate RTL tests for your react/nextjs components",
+  "description": "Generate RTL tests for your react/nextjs components using GitHub Copilot",
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.98.0"
@@ -11,7 +11,8 @@
     "Other"
   ],
   "activationEvents": [
-    "onCommand:vscode-test-generator.generateRtlTests"
+    "onCommand:vscode-test-generator.generateRtlTests",
+    "onCommand:github.copilot.chat.generateTests"
   ],
   "main": "./dist/extension.js",
   "contributes": {
@@ -30,6 +31,10 @@
         }
       ]
     }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/orpcy/Vscode-rtl-test-generator"
   },
   "scripts": {
     "vscode:prepublish": "yarn run package",
